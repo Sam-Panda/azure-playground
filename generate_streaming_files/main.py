@@ -1,10 +1,20 @@
 import os
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+from azure.storage.blob import BlobServiceClient
 from dotenv import load_dotenv
 import datetime
 import csv
 import random
 import time
+import names
+import random
+
+# declare some variables here 
+number_of_files_to_be_generated = 10
+number_of_seconds_to_be_waited = 5
+
+def create_random_names():
+    name = names.get_full_name()
+
 
 def create_file():
     load_dotenv()
@@ -25,9 +35,9 @@ def create_file():
     headers = ['Name', 'Age', 'Country']
     data = []
     for i in range(10):
-        name = f'Person {i+1}'
-        age = random.randint(18, 60)
-        country = random.choice(['USA', 'UK', 'Australia', 'Canada', 'India'])
+        name = create_random_names()
+        age = random.randint(10, 60)
+        country = random.choice(['USA', 'UK', 'Australia', 'Canada', 'India', "dummy"])
         data.append([name, age, country])
 
     file_name = 'temp_random.csv'
@@ -40,8 +50,8 @@ def create_file():
         blob_client.upload_blob(data)
         print(f"files_uploaded - {blob_client.url}")
 
-for i in range(10):
-    create_file()
-    time.sleep(10)
-    
-    
+def __init__():
+    for i in range(number_of_files_to_be_generated):
+        create_file()
+        time.sleep(number_of_seconds_to_be_waited)
+        
