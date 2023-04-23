@@ -12,14 +12,11 @@ except ModuleNotFoundError:
 from airflow.providers.microsoft.azure.operators.data_factory import AzureDataFactoryRunPipelineOperator
 from airflow.providers.microsoft.azure.sensors.data_factory import AzureDataFactoryPipelineRunStatusSensor
 from airflow.providers.databricks.operators.databricks import DatabricksRunNowOperator
-from powerbi.datasets import Datasets
+
 from airflow.operators.python_operator import PythonOperator
 
 from airflow.utils.edgemodifier import Label
 
-import os
-from dotenv import load_dotenv
-load_dotenv()
 
 with DAG(
     dag_id="example_adf_run_pipeline",
@@ -77,46 +74,15 @@ with DAG(
 
     # [END operator_databricks_job_pipeline_sync]
 
-    # [START operator_pbi_refresh_dataset_sync]
-     # read the data from the the .env file
    
-    pbi_client_id = os.getenv("PBI_CLIENT_ID")
-    pbi_client_secret = os.getenv("PBI_CLIENT_SECRET")
-    pbi_tenant_id = os.getenv("PBI_TENANT_ID")
-
-    # Default arguments for the DAG
-    default_args = {
-    'owner': 'me',
-    'start_date': datetime(2022, 1, 1),
-    'depends_on_past': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
-    }
-
-    # Define a function to refresh the dataset
-    def refresh_dataset(**kwargs):
-    # Create a Power BI client
-        datasets = Datasets(client_id='your_client_id',
-                        client_secret='your_client_secret',
-                        tenant_id='your_tenant_id')
-        dataset_name = 'airflow_refresh_test'
-        datasets.refresh(dataset_name)
-        print(f'Successfully refreshed dataset: {dataset_name}')
-
-    # Create a PythonOperator to run the dataset refresh
-    refresh_dataset_operator = PythonOperator(
-    task_id='refresh_dataset',
-    python_callable=refresh_dataset,
-    provide_context=True
-    )
-
+   
     # Task dependency created via `>>`:
 
     begin >> Label("Trigger the First ADF pipeline") >> run_pipeline1
     begin >> Label("Trigger the second ADF pipeline") >> run_pipeline2
     [run_pipeline1, run_pipeline2] >> databricks_job_run
-    databricks_job_run >> refresh_dataset_operator
-    refresh_dataset_operator >> end
+    databricks_job_run >> end
+  
 
     # Task dependency created via `XComArgs`:
     #   run_pipeline2 >> pipeline_run_sensor
